@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
-import { Mic, MicOff, Type, Loader2, LogOut } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Mic, MicOff, Type, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface ContextInputPageProps {
@@ -8,7 +7,6 @@ interface ContextInputPageProps {
 }
 
 export default function ContextInputPage({ onContextSubmit }: ContextInputPageProps) {
-  const { user, signOut } = useAuth();
   const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -81,24 +79,13 @@ export default function ContextInputPage({ onContextSubmit }: ContextInputPagePr
 
     setIsProcessing(true);
     try {
-      const { data: contextData, error } = await supabase
-        .from('speech_contexts')
-        .insert({
-          user_id: user?.id,
-          context_data: { rawInput: contextText },
-          input_mode: inputMode,
-        })
-        .select()
-        .maybeSingle();
+      const tempContextId = `temp_${Date.now()}`;
+      const contextData = { rawInput: contextText };
 
-      if (error) throw error;
-
-      if (contextData) {
-        onContextSubmit(contextData.id, contextData.context_data);
-      }
+      onContextSubmit(tempContextId, contextData);
     } catch (error) {
-      console.error('Error saving context:', error);
-      alert('Failed to save context. Please try again.');
+      console.error('Error processing context:', error);
+      alert('Failed to process context. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -107,18 +94,9 @@ export default function ContextInputPage({ onContextSubmit }: ContextInputPagePr
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-4">
       <div className="max-w-4xl mx-auto py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Speech Context</h1>
-            <p className="text-gray-600 mt-1">Tell us about your upcoming speech</p>
-          </div>
-          <button
-            onClick={() => signOut()}
-            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-white rounded-lg transition-all"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Sign Out</span>
-          </button>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Speech Context</h1>
+          <p className="text-gray-600 mt-1">Tell us about your upcoming speech</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">

@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Mic, MicOff, Volume2, VolumeX, Loader2, ArrowLeft } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
 
 interface SpeechTrainingPageProps {
   contextId: string;
@@ -10,7 +8,6 @@ interface SpeechTrainingPageProps {
 }
 
 export default function SpeechTrainingPage({ contextId, contextData, onBack }: SpeechTrainingPageProps) {
-  const { user } = useAuth();
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
@@ -23,28 +20,8 @@ export default function SpeechTrainingPage({ contextId, contextData, onBack }: S
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    createSession();
     startInitialGreeting();
   }, []);
-
-  const createSession = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('speech_sessions')
-        .insert({
-          context_id: contextId,
-          user_id: user?.id,
-          status: 'active',
-        })
-        .select()
-        .maybeSingle();
-
-      if (error) throw error;
-      if (data) setSessionId(data.id);
-    } catch (error) {
-      console.error('Error creating session:', error);
-    }
-  };
 
   const startInitialGreeting = () => {
     setIsAvatarSpeaking(true);
@@ -143,17 +120,7 @@ export default function SpeechTrainingPage({ contextId, contextData, onBack }: S
     }
   };
 
-  const handleEndSession = async () => {
-    if (sessionId) {
-      try {
-        await supabase
-          .from('speech_sessions')
-          .update({ status: 'completed' })
-          .eq('id', sessionId);
-      } catch (error) {
-        console.error('Error ending session:', error);
-      }
-    }
+  const handleEndSession = () => {
     onBack();
   };
 
