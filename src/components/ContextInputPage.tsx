@@ -13,6 +13,8 @@ export default function ContextInputPage({ onContextSubmit }: ContextInputPagePr
   const [contextText, setContextText] = useState('');
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [testMessage, setTestMessage] = useState('Hello! This is a test message from the Speech Training app.');
+  const [testConversationId, setTestConversationId] = useState('');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -53,15 +55,21 @@ export default function ContextInputPage({ onContextSubmit }: ContextInputPagePr
     setTestResult(null);
 
     try {
+      const payload: Record<string, string | boolean> = {
+        message: testMessage || 'Hello! This is a test message from the Speech Training app.',
+        test: true,
+      };
+
+      if (testConversationId.trim()) {
+        payload.conversation_id = testConversationId.trim();
+      }
+
       const response = await fetch('https://mattferoz.app.n8n.cloud/webhook/eleven-labs-conversation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message: 'Hello! This is a test message from the Speech Training app.',
-          test: true,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -140,10 +148,31 @@ export default function ContextInputPage({ onContextSubmit }: ContextInputPagePr
               <h1 className="text-3xl font-bold text-gray-900">Speech Context</h1>
               <p className="text-gray-600 mt-1">Tell us about your upcoming speech</p>
             </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-[2fr,1fr,auto] items-end">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-gray-700 mb-1">Test message</label>
+              <input
+                value={testMessage}
+                onChange={(e) => setTestMessage(e.target.value)}
+                placeholder="Enter a test prompt to send to the webhook"
+                className="px-3 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-gray-700 mb-1">Conversation ID (optional)</label>
+              <input
+                value={testConversationId}
+                onChange={(e) => setTestConversationId(e.target.value)}
+                placeholder="e.g. test-123"
+                className="px-3 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
             <button
               onClick={handleTestWebhook}
               disabled={isTesting}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-gray-900 hover:bg-black text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 h-[42px] mt-6"
             >
               {isTesting ? (
                 <>
@@ -151,7 +180,7 @@ export default function ContextInputPage({ onContextSubmit }: ContextInputPagePr
                   Testing...
                 </>
               ) : (
-                'Test Webhook'
+                'Send Test'
               )}
             </button>
           </div>
