@@ -11,6 +11,8 @@ export default function ContextInputPage({ onContextSubmit }: ContextInputPagePr
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [contextText, setContextText] = useState('');
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -43,6 +45,44 @@ export default function ContextInputPage({ onContextSubmit }: ContextInputPagePr
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+    }
+  };
+
+  const handleTestWebhook = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+
+    try {
+      const response = await fetch('https://mattferoz.app.n8n.cloud/webhook/eleven-labs-conversation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'Hello! This is a test message from the Speech Training app.',
+          test: true,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTestResult({
+          success: true,
+          message: `Connection successful! Response: ${JSON.stringify(data, null, 2)}`,
+        });
+      } else {
+        setTestResult({
+          success: false,
+          message: `Connection failed with status: ${response.status}`,
+        });
+      }
+    } catch (error) {
+      setTestResult({
+        success: false,
+        message: `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -95,8 +135,52 @@ export default function ContextInputPage({ onContextSubmit }: ContextInputPagePr
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-4">
       <div className="max-w-4xl mx-auto py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Speech Context</h1>
-          <p className="text-gray-600 mt-1">Tell us about your upcoming speech</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Speech Context</h1>
+              <p className="text-gray-600 mt-1">Tell us about your upcoming speech</p>
+            </div>
+            <button
+              onClick={handleTestWebhook}
+              disabled={isTesting}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isTesting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                'Test Webhook'
+              )}
+            </button>
+          </div>
+
+          {testResult && (
+            <div className={`mt-4 p-4 rounded-lg border ${
+              testResult.success
+                ? 'bg-green-50 border-green-200'
+                : 'bg-red-50 border-red-200'
+            }`}>
+              <div className="flex items-start gap-2">
+                <span className="text-lg">
+                  {testResult.success ? '✅' : '❌'}
+                </span>
+                <div className="flex-1">
+                  <p className={`text-sm font-medium mb-1 ${
+                    testResult.success ? 'text-green-800' : 'text-red-800'
+                  }`}>
+                    {testResult.success ? 'Webhook Test Successful' : 'Webhook Test Failed'}
+                  </p>
+                  <pre className={`text-xs whitespace-pre-wrap ${
+                    testResult.success ? 'text-green-700' : 'text-red-700'
+                  }`}>
+                    {testResult.message}
+                  </pre>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
