@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { Mic, MicOff, Type, Loader2 } from "lucide-react";
-import { supabase } from "../lib/supabase";
 
 interface ContextInputPageProps {
   onContextSubmit: (contextId: string, contextData: any) => void;
