@@ -71,7 +71,7 @@ export default function SpeechTrainingPage({ contextId, contextData, onBack }: S
         formData.append('session_id', sessionId);
       }
 
-      const response = await fetch('/api/speech', {
+      const response = await fetch('https://mattferoz.app.n8n.cloud/webhook/eleven-labs-conversation', {
         method: 'POST',
         body: formData,
       });

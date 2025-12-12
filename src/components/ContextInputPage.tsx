@@ -52,7 +52,7 @@ export default function ContextInputPage({ onContextSubmit }: ContextInputPagePr
       const formData = new FormData();
       formData.append('audio', audioBlob);
 
-      const response = await fetch('/api/context', {
+      const response = await fetch('https://mattferoz.app.n8n.cloud/webhook/eleven-labs-conversation', {
         method: 'POST',
         body: formData,
       });
